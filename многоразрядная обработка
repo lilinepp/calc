@@ -1,0 +1,225 @@
+'''#include <iostream>
+#include <string>
+#include <stack>
+#include <cmath>
+
+using namespace std;
+
+class Calculate
+{
+public:
+    string calculate(string infix)
+    {
+        string postfix = InfixToPostfix(infix);
+        return postfix;
+    }
+
+    int priority(char c)
+    {
+        switch (c)
+        {
+        case '(': // открывающая скобка
+        case ')': // закрывающая скобка
+            return 0;
+
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            return 1;
+
+        case '+':
+        case '-':
+            return 2;
+
+        case '*':
+        case '/':
+            return 3;
+
+        case '^': // степень
+            return 4;
+
+        case 'u': // унарный минус
+        case 'r': // корень
+        case 's': // синус
+        case 'c': // косинус
+        case 't': // тангенс
+        case 'g': //котангенс
+            return 5;
+
+        default:
+            return -1;
+        }
+    }
+
+   string InfixToPostfix(string infix)
+    {
+        string postfix;
+        stack<char> symbol;
+        string numberBuffer;
+
+        for (int i = 0; i < infix.size(); i++)
+        {
+            if (isdigit(infix[i]) || infix[i] == '.') // Учитываем цифры и точку
+            {
+                numberBuffer += infix[i];
+            }
+            else
+            {
+                if (!numberBuffer.empty())
+                {
+                    postfix += numberBuffer + ' ';
+                    numberBuffer.clear();
+                }
+
+                switch (priority(infix[i]))
+                {
+                case 2: // Операторы с приоритетом 2
+                case 3: // Операторы с приоритетом 3
+                case 4: // Операторы с приоритетом 4
+                case 5: // Операторы с приоритетом 5
+                    while (!symbol.empty() && priority(symbol.top()) >= priority(infix[i]))
+                    {
+                        postfix += symbol.top();
+                        postfix += ' ';
+                        symbol.pop();
+                    }
+                    symbol.push(infix[i]);
+                    break;
+                case 0: // Скобки
+                    if (infix[i] == '(')
+                    {
+                        symbol.push(infix[i]);
+                    }
+                    else if (infix[i] == ')')
+                    {
+                        while (!symbol.empty() && symbol.top() != '(')
+                        {
+                            postfix += symbol.top();
+                            postfix += ' ';
+                            symbol.pop();
+                        }
+                        if (!symbol.empty() && symbol.top() == '(')
+                        {
+                            symbol.pop(); // Удаляем открывающую скобку из стека
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+
+        if (!numberBuffer.empty())
+        {
+            postfix += numberBuffer + ' ';
+        }
+
+        while (!symbol.empty())
+        {
+            postfix += symbol.top();
+            postfix += ' ';
+            symbol.pop();
+        }
+
+        return postfix;
+    }
+    
+   double Postfix_value(string postfix)
+    {
+        stack<double> operands;
+        string numberBuffer; // Для хранения числа
+
+        for (int i = 0; i < postfix.size(); i++)
+        {
+            if (isdigit(postfix[i]) || postfix[i] == '.') // Проверяем, является ли символ цифрой или точкой
+            {
+                numberBuffer += postfix[i]; // Добавляем цифру или точку в буфер
+            }
+            else
+            {
+                if (!numberBuffer.empty())
+                {
+                    operands.push(stod(numberBuffer)); // Преобразуем буфер в число и помещаем в стек
+                    numberBuffer.clear(); // Очищаем буфер
+                }
+
+                // Обработка операторов
+                if (postfix[i] == '+' || postfix[i] == '-' || postfix[i] == '*' || postfix[i] == '/' || postfix[i] == '^')
+                {
+                    double operand2 = operands.top();
+                    operands.pop();
+                    double operand1 = operands.top();
+                    operands.pop();
+                    double result;
+
+                    switch (postfix[i])
+                    {
+                    case '+':
+                        result = operand1 + operand2;
+                        break;
+                    case '-':
+                        result = operand1 - operand2;
+                        break;
+                    case '*':
+                        result = operand1 * operand2;
+                        break;
+                    case '/':
+                        if (operand2 != 0)
+                        {
+                            result = operand1 / operand2;
+                        }
+                        else
+                        {
+                            cout << "деление на ноль" << endl;
+                            return 0.0; // Вернуть 0.0 в случае деления на ноль
+                        }
+                        break;
+                    case '^':
+                        result = pow(operand1, operand2);
+                        break;
+                    }
+
+                    operands.push(result);
+                }
+                else if (postfix[i] == 'r') // Обработка корня
+                {
+                    if (!operands.empty())
+                    {
+                        double operand = operands.top();
+                        operands.pop();
+                        operands.push(sqrt(operand));
+                    }
+                }
+            }
+        }
+
+        if (!numberBuffer.empty()) // Проверяем, остались ли числа в буфере
+        {
+            operands.push(stod(numberBuffer)); // Добавляем последнее число в стек
+        }
+
+        return operands.top(); // Возвращаем результат
+    }
+};
+
+int main()
+{
+    setlocale(LC_ALL, "RUSSIAN");
+    Calculate my_calc;
+
+    string infix = "2.5+6.1-5*5/8-7/4*3+7*2-8-6^2-r49";
+    string postfix = my_calc.calculate(infix);
+    cout << "Результат преобразования в постфиксную запись: " << postfix << endl;
+    double result = my_calc.Postfix_value(postfix);
+    cout << "Результат вычисления постфиксного выражения: " << result << endl;
+
+    return 0;
+}'''
