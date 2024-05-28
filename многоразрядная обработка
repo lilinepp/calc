@@ -58,8 +58,14 @@ public:
             return -1;
         }
     }
+    
+    double degreesToRadians(double degrees)
+    {
+        return degrees * M_PI / 180.0;
+    }
 
-   string InfixToPostfix(string infix)
+
+  string InfixToPostfix(string infix)
     {
         string postfix;
         stack<char> symbol;
@@ -79,41 +85,48 @@ public:
                     numberBuffer.clear();
                 }
 
-                switch (priority(infix[i]))
+                if (infix[i] == '-' && (i == 0 || infix[i-1] == '(' || infix[i-1] == ' ')) // Обнаружение унарного минуса
                 {
-                case 2: // Операторы с приоритетом 2
-                case 3: // Операторы с приоритетом 3
-                case 4: // Операторы с приоритетом 4
-                case 5: // Операторы с приоритетом 5
-                    while (!symbol.empty() && priority(symbol.top()) >= priority(infix[i]))
+                    symbol.push('u');
+                }
+                else
+                {
+                    switch (priority(infix[i]))
                     {
-                        postfix += symbol.top();
-                        postfix += ' ';
-                        symbol.pop();
-                    }
-                    symbol.push(infix[i]);
-                    break;
-                case 0: // Скобки
-                    if (infix[i] == '(')
-                    {
-                        symbol.push(infix[i]);
-                    }
-                    else if (infix[i] == ')')
-                    {
-                        while (!symbol.empty() && symbol.top() != '(')
+                    case 2: // Операторы с приоритетом 2
+                    case 3: // Операторы с приоритетом 3
+                    case 4: // Операторы с приоритетом 4
+                    case 5: // Операторы с приоритетом 5
+                        while (!symbol.empty() && priority(symbol.top()) >= priority(infix[i]))
                         {
                             postfix += symbol.top();
                             postfix += ' ';
                             symbol.pop();
                         }
-                        if (!symbol.empty() && symbol.top() == '(')
+                        symbol.push(infix[i]);
+                        break;
+                    case 0: // Скобки
+                        if (infix[i] == '(')
                         {
-                            symbol.pop(); // Удаляем открывающую скобку из стека
+                            symbol.push(infix[i]);
                         }
+                        else if (infix[i] == ')')
+                        {
+                            while (!symbol.empty() && symbol.top() != '(')
+                            {
+                                postfix += symbol.top();
+                                postfix += ' ';
+                                symbol.pop();
+                            }
+                            if (!symbol.empty() && symbol.top() == '(')
+                            {
+                                symbol.pop(); // Удаляем открывающую скобку из стека
+                            }
+                        }
+                        break;
+                    default:
+                        break;
                     }
-                    break;
-                default:
-                    break;
                 }
             }
         }
@@ -132,8 +145,7 @@ public:
 
         return postfix;
     }
-    
-   double Postfix_value(string postfix)
+    double Postfix_value(string postfix)
     {
         stack<double> operands;
         string numberBuffer; // Для хранения числа
@@ -190,6 +202,15 @@ public:
 
                     operands.push(result);
                 }
+                else if (postfix[i] == 'u') // Обработка унарного минуса
+                {
+                    if (!operands.empty())
+                    {
+                        double operand = operands.top();
+                        operands.pop();
+                        operands.push(-operand);
+                    }
+                }
                 else if (postfix[i] == 'r') // Обработка корня
                 {
                     if (!operands.empty())
@@ -197,6 +218,42 @@ public:
                         double operand = operands.top();
                         operands.pop();
                         operands.push(sqrt(operand));
+                    }
+                }
+                else if (postfix[i] == 's') // Обработка синуса
+                {
+                    if (!operands.empty())
+                    {
+                        double operand = operands.top();
+                        operands.pop();
+                        operands.push(sin(degreesToRadians(operand)));
+                    }
+                }
+                else if (postfix[i] == 'c') // Обработка косинуса
+                {
+                    if (!operands.empty())
+                    {
+                        double operand = operands.top();
+                        operands.pop();
+                         operands.push(cos(degreesToRadians(operand)));
+                    }
+                }
+                else if (postfix[i] == 't') // Обработка тангенса
+                {
+                    if (!operands.empty())
+                    {
+                        double operand = operands.top();
+                        operands.pop();
+                        operands.push(tan(degreesToRadians(operand)));
+                    }
+                }
+                else if (postfix[i] == 'g') // Обработка котангенса
+                {
+                    if (!operands.empty())
+                    {
+                        double operand = operands.top();
+                        operands.pop();
+                         operands.push(1/tan(degreesToRadians(operand)));
                     }
                 }
             }
@@ -216,7 +273,7 @@ int main()
     setlocale(LC_ALL, "RUSSIAN");
     Calculate my_calc;
 
-    string infix = "2.5+6.1-5*5/8-7/4*3+7*2-8-6^2-r49";
+    string infix = "g45";
     string postfix = my_calc.calculate(infix);
     cout << "Результат преобразования в постфиксную запись: " << postfix << endl;
     double result = my_calc.Postfix_value(postfix);
