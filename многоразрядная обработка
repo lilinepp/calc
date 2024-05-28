@@ -1,4 +1,4 @@
-'''#include <iostream>
+```#include <iostream>
 #include <string>
 #include <stack>
 #include <cmath>
@@ -222,4 +222,4 @@ int main()
     cout << "Результат вычисления постфиксного выражения: " << result << endl;
 
     return 0;
-}'''
+}```
